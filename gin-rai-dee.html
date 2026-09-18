@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodieHub Ultra - ระบบสุ่มอาหารอัจฉริยะ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Kanit', sans-serif; transition: all 0.3s ease; }
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      min-height: 100vh; margin: 0; padding: 20px;
+      display: flex; justify-content: center; align-items: center; color: #fff;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px; padding: 30px;
+      max-width: 450px; width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center;
+    }
+    .badge {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      padding: 6px 16px; border-radius: 20px;
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;
+    }
+    .food-img-wrapper {
+      width: 100%; height: 230px; border-radius: 16px;
+      overflow: hidden; margin: 15px 0; position: relative;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .food-img { width: 100%; height: 100%; object-fit: cover; }
+    .category-tag {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; color: #f1c40f;
+    }
+    .filter-select {
+      width: 100%; padding: 10px; margin-top: 15px; border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff; font-size: 0.9rem; outline: none; cursor: pointer;
+    }
+    .filter-select option { background: #1e1b4b; color: #fff; }
+    .meta-info {
+      display: flex; justify-content: space-between;
+      background: rgba(255, 255, 255, 0.05); padding: 10px 15px;
+      border-radius: 12px; font-size: 0.9rem; margin-top: 15px;
+    }
+    .btn-spin {
+      width: 100%; background: linear-gradient(90deg, #8e2de2, #4a00e0);
+      color: white; border: none; padding: 16px; font-size: 1.2rem;
+      border-radius: 14px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 10px 25px rgba(142, 45, 226, 0.4); margin-top: 15px;
+    }
+    .btn-spin:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-spin:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(142, 45, 226, 0.6); }
+    .btn-map {
+      display: none; width: 100%; background: #27ae60; color: white;
+      text-decoration: none; padding: 12px; border-radius: 12px;
+      font-weight: 600; margin-top: 10px; font-size: 0.95rem;
+    }
+  </style>
+</head> 
+<body>
+
+<div class="card">
+  <span class="badge">🚀 GROUP PROJECT 2026 ULTRA</span>
+  <h1 style="margin: 10px 0 5px; font-size: 2rem; background: linear-gradient(90deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    วันนี้กินอารายดีย์
+  </h1>
+  <p style="color: #cbd5e1; font-size: 0.85rem; margin: 0;">ระบบสุ่มอาหารคำนวณแคลอรีและงบประมาณ</p>
+
+  <!-- ตัวกรองประเภทอาหารที่ตรงกับคลังข้อมูล -->
+  <select id="filter" class="filter-select" onchange="filterMenu()">
+    <option value="all">🌐 แสดงทุกประเภทอาหาร</option>
+    <option value="พื้นบ้านใต้">👨🏾‍🦲🌊 พื้นบ้านใต้</option>
+    <option value="เมนูสิ้นคิด">🧠 เมนูสิ้นคิด</option>
+    <option value="เมนูหมู">🐖 เมนูหมู</option>
+    <option value="เมนูไก่">🐔 เมนูไก่</option>
+    <option value="เมนูเส้น">🍜 เมนูเส้น/ก๋วยเตี๋ยว</option>
+    
+    
+  </select>
+
+  <div class="food-img-wrapper">
+    <span class="category-tag" id="cate">สตรีทฟู้ด</span>
+    <img id="img" class="food-img" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600" alt="food">
+  </div>
+
+  <h2 id="title" style="margin: 0; color: #fff; font-size: 1.5rem;">กดปุ่มด้านล่างเพื่อเริ่มสุ่ม!</h2>
+  <p id="desc" style="color: #94a3b8; font-size: 0.9rem; min-height: 40px; margin-top: 5px;">
+    ระบบจะทำการสุ่มเมนูยอดฮิตจากคลังข้อมูล
+  </p>
+
+  <div class="meta-info">
+    <span>💵 ความนิยม: <strong id="price" style="color: #f9ed44;">-</strong></span>
+    <span>🔥 พลังงาน: <strong id="cal" style="color: #e74c3c;">-</strong></span>
+  </div>
+
+  <button id="spinBtn" class="btn-spin" onclick="spin()">🎰 สุ่มเมนูอาหารทันที</button>
+
+  <a id="mapBtn" class="btn-map" target="_blank" href="#">🔍 ค้นหาร้านที่ขายเมนูนี้นใกล้ฉัน</a>
+</div>
+
+<script>
+  // แก้ไขรูปภาพทั้งหมดเป็น URL บนเว็บ
+  const menu = [
+    { name: "ผัดกระเพราหมูกรอบไข่ดาว", price: "★★★★★", cal: "650 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "รสชาติเผ็ดร้อน กรอบนอกนุ่มใน เสิร์ฟพร้อมไข่ดาวลาวา",  },
+    { name: "ผัดกระเพราหมูกรอบไข่ดาว", price: "★★★★★", cal: "650 kcal", cate: "🐖 เมนูหมู", desc: "รสชาติเผ็ดร้อน กรอบนอกนุ่มใน เสิร์ฟพร้อมไข่ดาวลาวา",  },
+
+    { name: "ข้าวมันไก่", price: "★★★★☆", cal: "580 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "ไก่นุ่มฉ่ำๆ พร้อมน้ำจิ้มสูตรเด็ด", img : "" },
+    { name: "ข้าวมันไก่", price: "★★★★☆", cal: "580 kcal", cate: "🐔 เมนูไก่", desc: "ไก่นุ่มฉ่ำๆ พร้อมน้ำจิ้มสูตรเด็ด", img: "" },
+
+    { name: "ลาบหมู", price: "★★★★★", cal: "520 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "เมนูรสแซ่บใช้เนื้อสับคลุกข้าวคั่ว พริกป่น น้ำมะนาว และสมุนไพรสด", },
+    { name: "ลาบหมู", price: "★★★★★", cal: "520 kcal", cate: "🐖 เมนูหมู", desc: "เมนูรสแซ่บใช้เนื้อสับคลุกข้าวคั่ว พริกป่น น้ำมะนาว และสมุนไพรสด",  },
+
+    { name: "ลาบไก่", price: "★★★★★", cal: "520 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "เมนูรสแซ่บใช้เนื้อสับคลุกข้าวคั่ว พริกป่น น้ำมะนาว และสมุนไพรสด",  },
+    { name: "ลาบไก่", price: "★★★☆☆", cal: "520 kcal", cate: "🐔 เมนูไก่", desc: "เมนูรสแซ่บใช้เนื้อสับคลุกข้าวคั่ว พริกป่น น้ำมะนาว และสมุนไพรสด",  },
+
+    { name: "เครื่องแกงหมูกรอบไข่ดาว", price: "★★★★☆", cal: "580 kcal", cate: "👨🏾‍🦲🌊 พื้นบ้านใต้", desc: "พริกแกงใต้เข้มข้น รสจัดจ้านถึงเครื่อง",  },
+    { name: "เครื่องแกงหมูกรอบไข่ดาว", price: "★★★★☆", cal: "580 kcal", cate: "🐖 เมนูหมู", desc: "พริกแกงใต้เข้มข้น รสจัดจ้านถึงเครื่อง",  },
+
+    { name: "ข้าวยำปักษ์ใต้", price: "★★☆☆☆", cal: "350 kcal", cate: "👨🏾‍🦲🌊 พื้นบ้านใต้", desc: "ข้าวยำสมุนไพร ราดน้ำบูดูรสเข้มข้น โรยส้มโอ มะพร้าวคั่ว",  },
+
+    { name: "ก๋วยเตี๋ยวเย็นตาโฟ", price: "★★★☆☆", cal: "420 kcal", cate: "🍜 เมนูเส้น", desc: "ซอสเย็นตาโฟเข้มข้น พร้อมเครื่องแน่นๆ",  },
+
+    { name: "ไก่ทอดหาดใหญ่หอมเจียว", price: "★★★★★", cal: "550 kcal", cate: "👨🏾‍🦲🌊 พื้นบ้านใต้", desc: "ไก่หมักเครื่องเทศทอดจนหนังกรอบเนื้อนุ่ม โรยหอมเจียวกรอบจุกๆ", },
+    { name: "ไก่ทอดหาดใหญ่หอมเจียว", price: "★★★★★", cal: "550 kcal", cate: "🐔 เมนูไก่", desc: "ไก่หมักเครื่องเทศทอดจนหนังกรอบเนื้อนุ่ม โรยหอมเจียวกรอบจุกๆ", },
+
+    { name: "ก๋วยเตี๋ยวเรือ", price: "★★★★☆", cal: "380 kcal", cate: "🍜 เมนูเส้น", desc: "น้ำซุปเข้มข้น หอมกลิ่นเครื่องเทศไทย",  },
+
+    { name: "ก๋วยเตี๋ยวแห้ง", price: "★★★☆☆", cal: "450 kcal", cate: "🍜 เมนูเส้น", desc: "เส้นเหนียวนุ่ม คลุกน้ำมันกระเทียมเจียวหอมๆ",  },
+
+    { name: "ก๋วยเตี๋ยวต้มยำ", price: "★★★★★", cal: "550 kcal", cate: "🍜 เมนูเส้น", desc: "รสจัดจ้าน เปรี้ยว เผ็ด หวาน เค็ม ครบรส",  },
+
+    { name: "ขนมจีนน้ำยา", price: "★★★★☆", cal: "430 kcal", cate: "🍜 เมนูเส้น", desc: "น้ำยากะทิเข้มข้น เสิร์ฟพร้อมผักสดนานาชนิด",  },
+
+    { name: "ข้าวหมูแดง", price: "★★★☆☆", cal: "600 kcal", cate: "🐖 เมนูหมู", desc: "หมูแดงนุ่ม ชิ้นหมูกรอบ ราดน้ำซอสหมูแดงรสหวานกลมกล่อม",  },
+
+    { name: "ข้าวขาหมูไข่ต้ม", price: "★★★★☆", cal: "690 kcal", cate: "🐖 เมนูหมู", desc: "ขาหมูต้มเปื่อย นุ่มละลายในปาก เสิร์ฟพร้อมผักกาดดอง",  },
+
+    { name: "ข้าวผัดเขียวหวานไก่", price: "★★☆☆☆", cal: "540 kcal", cate: "🐔 เมนูไก่", desc: "ผัดพริกแกงเขียวหวานเข้มข้น หอมกลิ่นโหระพาและกะทิ",  },
+    
+    { name: "ข้าวผัดพริกเผาหมูกรอบ", price: "★★★☆☆", cal: "660 kcal", cate: "🐖 เมนูหมู", desc: "รสชาติหวานเผ็ดลงตัว หมูกรอบเคี้ยวเพลิน" },
+
+    { name: "ข้าวหมูกระเทียมพริกไทย", price: "★★★☆☆", cal: "580 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "หมูผัดกระเทียมทอง หอมพริกไทย คลุกข้าวสวยร้อนๆ" },
+    { name: "ข้าวหมูกระเทียมพริกไทย", price: "★★★☆☆", cal: "580 kcal", cate: "🐖 เมนูหมู", desc: "หมูผัดกระเทียมทอง หอมพริกไทย คลุกข้าวสวยร้อนๆ" },
+
+
+    { name: "ส้มตำไทย", price: "★★★☆☆", cal: "250 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "มะละกอกรอบๆ ครบรส เปรี้ยว หวาน เผ็ด หอมถั่วคั่ว" },
+
+    { name: "ข้าวเหนียวไก่ทอด", price: "★★★★☆", cal: "490 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "ไก่ทอดร้อนๆ กินคู่ข้าวเหนียวนุ่มๆ" },
+    { name: "ข้าวเหนียวไก่ทอด", price: "★★★★☆", cal: "490 kcal", cate: "🐔 เมนูไก่", desc: "ไก่ทอดร้อนๆ กินคู่ข้าวเหนียวนุ่มๆ" },
+
+    { name: "ข้าวไข่เจียวหมูสับ", price: "★★★☆☆", cal: "560 kcal", cate: "🧠 เมนูสิ้นคิด", desc: "เมนูเบสิกกรอบฟู หมูสับแน่นๆ กินคู่ซอสมะเขือเทศ",  },
+    { name: "ข้าวไข่เจียวหมูสับ", price: "★★★☆☆", cal: "560 kcal", cate: "🐖 เมนูหมู", desc: "เมนูเบสิกกรอบฟู หมูสับแน่นๆ กินคู่ซอสมะเขือเทศ" },
+    
+    
+    { name: "ข้าวคั่วกลิ้งหมูสับ", price: "★★★★☆", cal: "510 kcal", cate: "👨🏾‍🦲🌊 พื้นบ้านใต้", desc: "เผ็ดร้อนจัดจ้าน หอมกลิ่นเครื่องแกงใต้แท้ๆ" },
+    { name: "ข้าวคั่วกลิ้งหมูสับ", price: "★★★★☆", cal: "510 kcal", cate: "🐖 เมนูหมู", desc: "เผ็ดร้อนจัดจ้าน หอมกลิ่นเครื่องแกงใต้แท้ๆ"},
+    
+  ];
+
+  let currentMenuList = [...menu];
+
+  function filterMenu() {
+    const selectedCategory = document.getElementById('filter').value;
+    if (selectedCategory === 'all') {
+      currentMenuList = [...menu];
+    } else {
+      currentMenuList = menu.filter(item => item.cate.includes(selectedCategory));
+    }
+  }
+
+  function spin() {
+    if (currentMenuList.length === 0) {
+      alert("ไม่มีรายการอาหารในหมวดหมู่ที่เลือก");
+      return;
+    }
+
+    const btn = document.getElementById('spinBtn');
+    const mapBtn = document.getElementById('mapBtn');
+    btn.disabled = true;
+    mapBtn.style.display = "none";
+
+    let count = 0;
+    const timer = setInterval(() => {
+      const random = currentMenuList[Math.floor(Math.random() * currentMenuList.length)];
+      document.getElementById('title').innerText = random.name;
+      document.getElementById('img').src = random.img;
+      document.getElementById('price').innerText = random.price;
+      document.getElementById('cal').innerText = random.cal;
+      document.getElementById('cate').innerText = random.cate;
+      document.getElementById('desc').innerText = random.desc || "เมนูอร่อยพร้อมเสิร์ฟ";
+      count++;
+
+      if (count > 15) {
+        clearInterval(timer);
+        btn.disabled = false;
+        
+        mapBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(random.name)}`;
+        mapBtn.style.display = "block";
+
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
+      }
+    }, 60);
+  }
+</script>
+
+</body>
+</html>
